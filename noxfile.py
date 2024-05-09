@@ -29,7 +29,10 @@ SOURCE_FILES = (
     "utils/",
 )
 
-TYPED_FILES = ("elasticsearch_dsl/query.py",)
+TYPED_FILES = (
+    "elasticsearch_dsl/function.py",
+    "elasticsearch_dsl/query.py",
+)
 
 
 @nox.session(

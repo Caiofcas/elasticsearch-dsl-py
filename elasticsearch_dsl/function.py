@@ -16,17 +16,32 @@
 #  under the License.
 
 import collections.abc
+from copy import deepcopy
+from typing import Optional, Union, MutableMapping, Any, ClassVar, Dict, overload, TypeVar
 
 from .utils import DslBase
 
+_SFVar = TypeVar("_SFVar", bound="ScoreFunction")
 
-def SF(name_or_sf, **params):
+@overload
+def SF(name_or_sf: MutableMapping[str, Any]) -> "ScoreFunction":
+    ...
+
+@overload
+def SF(name_or_sf: _SFVar) -> _SFVar:
+    ...
+
+@overload
+def SF(name_or_sf: str, **params: Any) -> "ScoreFunction":
+    ...
+
+def SF(name_or_sf: Union[str, MutableMapping[str, Any], _SFVar], **params: Any) -> Union[_SFVar, "ScoreFunction"]:
     # {"script_score": {"script": "_score"}, "filter": {}}
-    if isinstance(name_or_sf, collections.abc.Mapping):
+    if isinstance(name_or_sf, collections.abc.MutableMapping):
         if params:
             raise ValueError("SF() cannot accept parameters when passing in a dict.")
         kwargs = {}
-        sf = name_or_sf.copy()
+        sf = deepcopy(name_or_sf)
         for k in ScoreFunction._param_defs:
             if k in name_or_sf:
                 kwargs[k] = sf.pop(k)
@@ -68,13 +83,13 @@ class ScoreFunction(DslBase):
         "filter": {"type": "query"},
         "weight": {},
     }
-    name = None
+    name: ClassVar[Optional[str]] = None
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
         d = super().to_dict()
         # filter and query dicts should be at the same level as us
         for k in self._param_defs:
-            if k in d[self.name]:
+            if self.name and k in d[self.name]:
                 d[k] = d[self.name].pop(k)
         return d
 
@@ -86,12 +101,13 @@ class ScriptScore(ScoreFunction):
 class BoostFactor(ScoreFunction):
     name = "boost_factor"
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
         d = super().to_dict()
-        if "value" in d[self.name]:
-            d[self.name] = d[self.name].pop("value")
-        else:
-            del d[self.name]
+        if self.name:
+            if "value" in d[self.name]:
+                d[self.name] = d[self.name].pop("value")
+            else:
+                del d[self.name]
         return d
 
 

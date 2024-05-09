@@ -18,7 +18,7 @@
 
 import collections.abc
 from copy import copy
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, ClassVar, Dict, Union
 
 from typing_extensions import Self
 
@@ -251,7 +251,8 @@ class DslBase(metaclass=DslMeta):
           all values in the `must` attribute into Query objects)
     """
 
-    _param_defs = {}
+    _param_defs: ClassVar[Dict[str, Dict[str, Union[str, bool]]]] = {}
+    name: ClassVar[Optional[str]]
 
     @classmethod
     def get_dsl_class(
@@ -356,7 +357,7 @@ class DslBase(metaclass=DslMeta):
             return AttrDict(value)
         return value
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """
         Serialize the DSL object to plain dict
         """
